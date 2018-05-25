@@ -2,10 +2,10 @@ ComandHandler
 =============
 
 CommandHandler is a library for Arduino and other Wiring-type
-environments to implment command parsing from serial data streams
+environments to implement command parsing from serial data streams
 where characters arrive separately.
 
-The library des not use any dynamic memory allocation and the caller
+The library does not use any dynamic memory allocation. The caller
 is required to pass in the buffer required, thereby allowing full
 control of the memory used.
 
