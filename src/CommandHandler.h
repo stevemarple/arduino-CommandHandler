@@ -31,7 +31,7 @@ private:
 class CommandHandler {
 public:
 	static bool startsWith(const char *match, const char *str, char **ep);
-	static bool startsWith_P(const char *match, const char *str, char **ep);
+	// static bool startsWith_P(const char *match, const char *str, char **ep);
 
 	inline CommandHandler(void) :
 		_buffer(NULL),

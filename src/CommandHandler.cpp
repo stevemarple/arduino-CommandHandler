@@ -20,6 +20,7 @@ bool CommandHandler::startsWith(const char *match, const char *str, char **ep)
 }
 
 
+/*
 bool CommandHandler::startsWith_P(const char *match, const char *str, char **ep)
 {
 	char c;
@@ -33,6 +34,7 @@ bool CommandHandler::startsWith_P(const char *match, const char *str, char **ep)
 		*ep = (char*)str;
 	return true;
 }
+*/
 
 
 void CommandHandler::begin(char *buffer, int bufferLength, CommandOption *options, int optionsLength, void (*unknownCommandCallback)(const char*), void (*commandTooLongCallback)(int))
