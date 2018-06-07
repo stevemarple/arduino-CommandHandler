@@ -70,8 +70,11 @@ bool CommandHandler::process(Stream &stream)
 		int commandLength = _ptr - _buffer;
 
 		if (commandLength >= _bufferLength) {
-			if (_commandTooLongCallback != NULL)
+			if (_commandTooLongCallback != NULL) {
+				// Terminate for safety!
+				_buffer[_bufferLength - 1] = '\0';
 				_commandTooLongCallback(commandLength);
+			}
 			resetBuffer();
 			return true;
 		}
@@ -84,6 +87,7 @@ bool CommandHandler::process(Stream &stream)
 		*_ptr = '\0';
 
 #ifdef COMMAND_HANDLER_DEBUG
+		stream.println("----");
 		stream.println("EOL received");
 		stream.print("Buffer: ");
 		stream.println(_buffer);
@@ -108,7 +112,7 @@ bool CommandHandler::process(Stream &stream)
 				stream.println(_options[i].getCommand());
 #endif
 				found = true;
-				_options[i].callback(ep);
+				_options[i].callback(ep);				
 				break;
 			}
 		}
@@ -125,10 +129,22 @@ bool CommandHandler::process(Stream &stream)
 
 	}
 	else {
-		if (_ptr - _buffer < (_bufferLength - 1))
+		if (_ptr - _buffer < (_bufferLength - 1)) {
 			// Insert character into buffer to process later, leaving
 			// room to append a terminating '\0' character.
 			*_ptr = c;
+			*(_ptr + 1) = '\0';
+
+#ifdef COMMAND_HANDLER_DEBUG
+			stream.print("Command buffer: ");
+			stream.println(_buffer);
+#endif
+		}
+#ifdef COMMAND_HANDLER_DEBUG
+		else {
+			stream.println("Command buffer full");
+		}
+#endif
 
 		++_ptr;
 	}
