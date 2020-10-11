@@ -1,35 +1,34 @@
 #include <CommandHandler.h>
 
-// Demonstrate an AT command set interface using CommandHandler.
+// Demonstrate an AT command set interface using CommandHandler. This implementation
+// is similar to the AT command interface of the Espressif ESP8266 WiFi module.
 
 constexpr uint8_t maxCommandLength = 80;
 
 // Commands
-void cmdPrintHelp(const char *);
-void cmdAT(const char *s);
-void cmdGetVersion(const char *s);
-void cmdGetName(const char *s);
-void cmdSetName(const char *s);
+bool cmdPrintHelp(const char*, Stream&, CommandOption&);
+bool cmdAT(const char *, Stream&, CommandOption&);
+bool cmdGetVersion(const char *, Stream&, CommandOption&);
+bool cmdGetName(const char *, Stream&, CommandOption&);
+bool cmdSetName(const char *, Stream&, CommandOption&);
 
-void errorCommand(const char *s);
-void commandTooLong(int);
+void errorCommand(const char *s, Stream &stream);
+void commandTooLong(Stream &stream);
 
 CommandOption commands[] = {
-    CommandOption("HELP", cmdPrintHelp),
-    CommandOption("?", cmdPrintHelp),
-    CommandOption("AT+GMR", cmdGetVersion),
-    
-    // There are several ways to implement get and set commands. It is possible to
-    // use a single function and test the first character after the match. Here we
-    // separate the get and set into two functions.
-    CommandOption("AT+NAME=", cmdSetName),
+  CommandOption("HELP", cmdPrintHelp, true),
+  CommandOption("?", cmdPrintHelp, true),
+  // "AT" matches the start of other commands. Since the partialMatch parameter is set false
+  // the command can be placed at any point in the array, otherwise it would need to be
+  // entered after other AT commands.
+  CommandOption("AT", cmdAT, false),
+  CommandOption("AT+GMR", cmdGetVersion, false),
 
-    CommandOption("AT+NAME?", cmdGetName),
-    // AT+NAME must be listed after the other similar commands so that they are tested first.
-    CommandOption("AT+NAME", cmdGetName), 
-
-    // The plain AT command must be tested last since it matches the start of all other AT commands.
-    CommandOption("AT", cmdAT),
+  // There are several ways to implement get and set commands. It is possible to
+  // use a single function and test the first character after the match. Here we
+  // separate the get and set into two functions.
+  CommandOption("AT+NAME=", cmdSetName, true),
+  CommandOption("AT+NAME?", cmdGetName, false),
 };
 constexpr uint8_t numCommands = sizeof(commands) / sizeof(commands[0]);
 
@@ -41,97 +40,101 @@ char name[maxCommandLength] = {'\0'};
 
 void setup(void)
 {
-    Serial.begin(9600);
-    serialHandler.begin(serialCommandBuffer, sizeof(serialCommandBuffer), commands, numCommands, errorCommand, commandTooLong);
-    
-    // Print some help. No command was issued so don't send "OK"
-    printHelp();
+  Serial.begin(9600);
+  serialHandler.begin(serialCommandBuffer, sizeof(serialCommandBuffer), commands, numCommands, errorCommand, commandTooLong);
+
+  // Print some help. No command was issued so don't send "OK"
+  printHelp(Serial);
 }
 
 void loop(void)
 {
-    // Put your other commands here.
-    
-    // Have the command handler process any incoming data. If a complete command is ready the matching
-    // callback function will be called.
-    serialHandler.process(Serial);
+  // Put your other commands here.
+
+  // Have the command handler process any incoming data. If a complete command is ready the matching
+  // callback function will be called.
+  serialHandler.process(Serial);
 }
 
 
-void printHelp(void)
+void printHelp(Stream& stream)
 {
-    // Print some help information.
-    Serial.println("+HELP  COMMAND HELP");
-    Serial.println("+HELP  ============");
-    Serial.println("+HELP ");
-    Serial.println("+HELP  Valid commands are:");
-    Serial.println("+HELP  AT                 Print OK (null command)");
-    Serial.println("+HELP ");
-    Serial.println("+HELP  AT+GMR             Print software version");
-    Serial.println("+HELP ");
-    Serial.println("+HELP  AT+NAME");
-    Serial.println("+HELP  AT+NAME?           Return current value of NAME");
-    Serial.println("+HELP ");
-    Serial.println("+HELP  AT+NAME=value      Set NAME to given value");
+  // Print some help information.
+  stream.println("+HELP  COMMAND HELP");
+  stream.println("+HELP  ============");
+  stream.println("+HELP ");
+  stream.println("+HELP  Valid commands are:");
+  stream.println("+HELP  AT                 Print OK (null command)");
+  stream.println("+HELP ");
+  stream.println("+HELP  AT+GMR             Print software version");
+  stream.println("+HELP ");
+  stream.println("+HELP  AT+NAME?           Return current value of NAME");
+  stream.println("+HELP ");
+  stream.println("+HELP  AT+NAME=value      Set NAME to given value");
 }
 
-void cmdPrintHelp(const char*)
+bool cmdPrintHelp(const char* s, Stream& stream, CommandOption&)
 {
-    // Ignore characters after the string match, any command that starts with the correct sequence will print the help
-    printHelp();
-    Serial.println();
-    Serial.println("OK");
+  // Ignore characters after the string match, any command that starts with the correct sequence will print the help
+  printHelp(stream);
+  stream.println();
+  stream.println("OK");
+  return true;
 }
 
-void cmdAT(const char *s)
+bool cmdAT(const char* s, Stream& stream, CommandOption&)
 {
-    if (s && *s == '\0') {
-        // String is valid, no more characters after the AT part matched
-        Serial.println("OK");
-    } else {
-        Serial.println("ERROR");
-    }
+  if (s && *s == '\0') {
+    // String is valid, no more characters after the AT part matched
+    stream.println("OK");
+  } else {
+    stream.println("ERROR");
+  }
+  return true;
 }
 
-void cmdGetVersion(const char *s)
+bool cmdGetVersion(const char* s, Stream& stream, CommandOption&)
 {
-    if (s && *s == '\0') {
-        // String is valid, no more characters after the AT+GMR part matched
-        Serial.println("+GMR:" COMMAND_HANDLER_VERSION);
-        Serial.println();
-        Serial.println("OK");
-    } else {
-       Serial.println("ERROR");
-    }
+  if (s && *s == '\0') {
+    // String is valid, no more characters after the AT+GMR part matched
+    stream.println("+GMR:" COMMAND_HANDLER_VERSION);
+    stream.println();
+    stream.println("OK");
+  } else {
+    stream.println("ERROR");
+  }
+  return true;
 }
 
 
-void cmdSetName(const char *s)
+bool cmdSetName(const char* s, Stream& stream, CommandOption&)
 {
-    strncpy(name, s, sizeof(name)); // Copy everything after the match
-    Serial.println("+NAME:"); Serial.println(name);
-    Serial.println();
-    Serial.println("OK" );
+  strncpy(name, s, sizeof(name)); // Copy everything after the match
+  stream.println("+NAME:"); stream.println(name);
+  stream.println();
+  stream.println("OK" );
+  return true;
 }
 
-void cmdGetName(const char *s)
+bool cmdGetName(const char* s, Stream& stream, CommandOption&)
 {
-    if (s && *s == '\0') {
-        // String is valid, no unwanted extra characters after the match
-        Serial.print("+NAME:"); Serial.println(name);
-        Serial.println();
-        Serial.println("OK");
-    } else {
-        Serial.println("ERROR");
-    }   
+  if (s && *s == '\0') {
+    // String is valid, no unwanted extra characters after the match
+    stream.print("+NAME:"); stream.println(name);
+    stream.println();
+    stream.println("OK");
+  } else {
+    stream.println("ERROR");
+  }
+  return true;
 }
 
-void errorCommand(const char *)
+void errorCommand(const char *, Stream &stream)
 {
-    Serial.println("ERROR");
+  stream.println("ERROR");
 }
 
-void commandTooLong(int)
+void commandTooLong(Stream &stream)
 {
-    Serial.println("ERROR");
+  stream.println("ERROR");
 }

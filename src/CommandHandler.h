@@ -6,56 +6,65 @@
 #include <Arduino.h>
 
 class CommandOption {
-public:
+  public:
 
-	inline CommandOption(const char* command,
-						 void (*callback)(const char*))
-		: _command(command), _callback(callback) {
-		;
-	};
+    inline CommandOption(const char* command,
+                         bool (*callback)(const char*, Stream&, const CommandOption&),
+                         bool partialMatch = true)
+      : _command(command), _partialMatch(partialMatch), _callback(callback) {
+      ;
+    };
 
-	inline const char* getCommand(void) const {
-		return _command;
-	};
+    inline const char* getCommand(void) const {
+      return _command;
+    };
 
-	inline void callback(const char* s) const {
-		if (_callback != NULL)
-			_callback(s);
-	};
+    inline bool callback(const char* s, Stream &stream) const {
+      if (_callback != nullptr)
+        return _callback(s, stream, *this);
+      else
+        return false;
+    };
 
-private:
-	const char* _command;
-	void (*_callback)(const char*);
+    inline bool acceptPartialMatch(void) const {
+      return _partialMatch;
+    }
+
+  private:
+    const char* _command;
+    bool (*_callback)(const char*, Stream &, const CommandOption&);
+    bool _partialMatch;
 };
 
+
 class CommandHandler {
-public:
-	static bool startsWith(const char *match, const char *str, char **ep);
-	// static bool startsWith_P(const char *match, const char *str, char **ep);
+  public:
+    static bool startsWith(const char *match, const char *str, char **ep);
+    // static bool startsWith_P(const char *match, const char *str, char **ep);
 
-	inline CommandHandler(void) :
-		_buffer(NULL),
-		_bufferLength(0),
-		_options(NULL),
-		_optionsLength(0),
-		_unknownCommandCallback(NULL),
-		_commandTooLongCallback(NULL),
-		_ptr(NULL) {
-		;
-	};
+    inline CommandHandler(void) :
+      _buffer(NULL),
+      _bufferLength(0),
+      _options(NULL),
+      _optionsLength(0),
+      _unknownCommandCallback(NULL),
+      _commandTooLongCallback(NULL),
+      _ptr(NULL) {
+      ;
+    };
 
-	void begin(char *buffer, int bufferLength, CommandOption *options, int optionsLength, void (*unknownCommandCallback)(const char*) = NULL, void (*commandTooLongCallback)(int) = NULL);
-	bool process(Stream &stream);
-	void resetBuffer();
+    void begin(char *buffer, int bufferLength, CommandOption *options, int optionsLength, void (*unknownCommandCallback)(const char*, Stream&) = NULL, void (*commandTooLongCallback)(Stream&) = NULL);
+    bool process(Stream &stream);
+    void resetBuffer();
 
-private:
-	char *_buffer;
-	int _bufferLength;
-	CommandOption *_options;
-	int _optionsLength;
-	void (*_unknownCommandCallback)(const char*);
-	void (*_commandTooLongCallback)(int);
-	char *_ptr;
+  private:
+    char *_buffer;
+    int _bufferLength;
+    CommandOption *_options;
+    int _optionsLength;
+    void (*_unknownCommandCallback)(const char*, Stream&);
+    void (*_commandTooLongCallback)(Stream&);
+    char *_ptr;
 };
 
 #endif
