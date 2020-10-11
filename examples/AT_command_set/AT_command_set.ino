@@ -6,11 +6,11 @@
 constexpr uint8_t maxCommandLength = 80;
 
 // Commands
-bool cmdPrintHelp(const char*, Stream&, CommandOption&);
-bool cmdAT(const char *, Stream&, CommandOption&);
-bool cmdGetVersion(const char *, Stream&, CommandOption&);
-bool cmdGetName(const char *, Stream&, CommandOption&);
-bool cmdSetName(const char *, Stream&, CommandOption&);
+bool cmdPrintHelp(const char*, Stream&, const CommandOption&);
+bool cmdAT(const char *, Stream&, const CommandOption&);
+bool cmdGetVersion(const char *, Stream&, const CommandOption&);
+bool cmdGetName(const char *, Stream&, const CommandOption&);
+bool cmdSetName(const char *, Stream&, const CommandOption&);
 
 void errorCommand(const char *s, Stream &stream);
 void commandTooLong(Stream &stream);
@@ -73,7 +73,7 @@ void printHelp(Stream& stream)
   stream.println("+HELP  AT+NAME=value      Set NAME to given value");
 }
 
-bool cmdPrintHelp(const char* s, Stream& stream, CommandOption&)
+bool cmdPrintHelp(const char* s, Stream& stream, const CommandOption&)
 {
   // Ignore characters after the string match, any command that starts with the correct sequence will print the help
   printHelp(stream);
@@ -82,7 +82,7 @@ bool cmdPrintHelp(const char* s, Stream& stream, CommandOption&)
   return true;
 }
 
-bool cmdAT(const char* s, Stream& stream, CommandOption&)
+bool cmdAT(const char* s, Stream& stream, const CommandOption&)
 {
   if (s && *s == '\0') {
     // String is valid, no more characters after the AT part matched
@@ -93,7 +93,7 @@ bool cmdAT(const char* s, Stream& stream, CommandOption&)
   return true;
 }
 
-bool cmdGetVersion(const char* s, Stream& stream, CommandOption&)
+bool cmdGetVersion(const char* s, Stream& stream, const CommandOption&)
 {
   if (s && *s == '\0') {
     // String is valid, no more characters after the AT+GMR part matched
@@ -107,7 +107,7 @@ bool cmdGetVersion(const char* s, Stream& stream, CommandOption&)
 }
 
 
-bool cmdSetName(const char* s, Stream& stream, CommandOption&)
+bool cmdSetName(const char* s, Stream& stream, const CommandOption&)
 {
   strncpy(name, s, sizeof(name)); // Copy everything after the match
   stream.println("+NAME:"); stream.println(name);
@@ -116,7 +116,7 @@ bool cmdSetName(const char* s, Stream& stream, CommandOption&)
   return true;
 }
 
-bool cmdGetName(const char* s, Stream& stream, CommandOption&)
+bool cmdGetName(const char* s, Stream& stream, const CommandOption&)
 {
   if (s && *s == '\0') {
     // String is valid, no unwanted extra characters after the match
