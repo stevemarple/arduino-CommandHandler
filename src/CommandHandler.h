@@ -1,7 +1,7 @@
 #ifndef COMMAND_HANDLER_H
 #define COMMAND_HANDLER_H
 
-#define COMMAND_HANDLER_VERSION "1.0.0"
+#define COMMAND_HANDLER_VERSION "1.0.1"
 
 #include <Arduino.h>
 
