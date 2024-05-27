@@ -11,7 +11,9 @@ class CommandOption {
     inline CommandOption(const char* command,
                          bool (*callback)(const char*, Stream&, const CommandOption&),
                          bool partialMatch = true)
-      : _command(command), _partialMatch(partialMatch), _callback(callback) {
+		: _command(command),
+		  _callback(callback),
+		  _partialMatch(partialMatch) {
       ;
     };
 
