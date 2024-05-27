@@ -13,7 +13,7 @@ control of the memory used.
 
 ## License
 
-The SoftWire library is licensed with the GNU Lesser General Public
+The CommandHandler library is licensed under the GNU Lesser General Public
 License. See LICENSE.txt for details.
 
 ## Version 2.0 changes
